@@ -1,11 +1,9 @@
-import math
-import time
-import random
-
 import pygame
 
-class PhysicsEntity:
-    def __init__(self, game, entityType, pos, size):
+
+class PhysicsEntity(pygame.sprite.Sprite):
+    def __init__(self, game, entityType, pos, size, offset=(0, 0)):
+        super().__init__()
         self.game = game
         self.type = entityType
         self.pos = list(pos)
@@ -14,7 +12,7 @@ class PhysicsEntity:
         self.collisionns = {'up': False, 'down': False, 'left': False, 'right': False}
 
         self.action = ''
-        self.animOffset = (0, 0)
+        self.animOffset = offset
         self.flip = False
         self.setAction('idle')
         self.health = 100
@@ -67,18 +65,27 @@ class PhysicsEntity:
 
 
 class Player(PhysicsEntity):
-    def __init__(self, game, pos, size):
-        super().__init__(game, 'player', pos, size)
+    def __init__(self, game, pos, size, offset):
+        super().__init__(game, 'player', pos, size, offset)
+        self.attackRectLeft = pygame.Rect(self.pos[0] - 100, self.pos[1], 75, 150)
+        self.attackRectRight = pygame.Rect(self.pos[0] + 100, self.pos[1] + 100, 75, 150)
 
     def update(self, tilemap, movement=(0, 0)):
         super().update(tilemap, movement=movement)
 
-        if movement[0] != 0 or movement[1] != 0:
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE]:
+            self.setAction('attack')
+        elif movement[0] != 0 or movement[1] != 0:
             self.setAction('run')
         else:
             self.setAction('idle')
 
     def draw(self, surface, offset):
+        self.attackRectLeft.topleft = (self.pos[0] - offset[0] - 100 + 5 + 10 + 25, self.pos[1] - offset[1] - 25 - 25)
+        self.attackRectRight.topright = (self.pos[0] - offset[0] - 100 + 5 + 205 + 2 - 25, self.pos[1] - offset[1] - 25 - 25)
+        pygame.draw.rect(surface, (200, 0, 0), self.attackRectLeft)
+        pygame.draw.rect(surface, (0, 0, 200), self.attackRectRight)
         pygame.draw.rect(surface, (0, 255, 0), self.rect1)
         self.rect1.x = self.pos[0] - offset[0]
         self.rect1.y = self.pos[1] - offset[1]
@@ -86,8 +93,8 @@ class Player(PhysicsEntity):
 
 
 class Enemy(PhysicsEntity):
-    def __init__(self, game, name, pos, size, sightRadius, attackRadius, speed):
-        super().__init__(game, name, pos, size)
+    def __init__(self, game, name, pos, size, sightRadius, attackRadius, speed , offset):
+        super().__init__(game, name, pos, size, offset)
         self.sightRadius = sightRadius
         self.playerMask = pygame.mask.Mask((0, 0))
         self.enemyMask = pygame.mask.Mask((0, 0))
@@ -97,20 +104,12 @@ class Enemy(PhysicsEntity):
         self.status = 'idle'
         self.attackSpeed = 5
         self.canAct = 0
+        self.death = False
+
 
         self.rect1.inflate(-200, -100)
 
-
-    def update(self, tilemap, offset, player, dt, movement=(0, 0)):
-
-        # Check if the circular mask and player's rectangle collide
-        # self.sightRect.x = self.pos[0]
-        # self.sightRect.y = self.pos[1]
-        #
-        # if self.sightRect.colliderect(player.rect1):
-        #     print(self.pos[0] - player.pos[0], self.pos[1] - player.pos[1])
-        #     print(movement)
-        #     movement = ((player.pos[0] // 30) * -1, (player.pos[1] // 30) * - 1)
+    def update(self, aasfs, tilemap, offset, player, dt, movement=(0, 0)):
 
         # Check collision with player's rectangle
 
@@ -120,7 +119,25 @@ class Enemy(PhysicsEntity):
 
         self.getStatus(player)
 
-        if self.status == 'move':
+        print(self.action)
+
+        if self.health <= 0 and self.action != 'death':
+            self.setAction('death')
+            self.death = True
+
+        elif self.rect1.colliderect(player.attackRectLeft) and player.flip and player.action == 'attack':
+            self.health -= 10
+            print('enemy', self.health)
+            self.setAction('hurt')
+
+        elif self.status == 'attack':
+            if self.canAct == 0:
+                self.setAction('attack')
+                self.canAct = 1
+                print('attack')
+                player.health -= 10
+
+        elif self.status == 'move':
             var = self.getPlayerDistance(player)
             dx, dy = var[1]
             distance = var[0]
@@ -131,11 +148,11 @@ class Enemy(PhysicsEntity):
             new_y -= self.pos[1]
             movement = (new_x, new_y)
 
-        if self.status == 'attack':
-            if self.canAct == 0:
-                self.canAct = 1
-                print('attack')
-                player.health -= 10
+
+
+        elif self.action != 'death' or self.animation.frame == 0:
+            self.setAction('idle')
+
 
         super().update(tilemap, movement=movement)
 
@@ -143,8 +160,10 @@ class Enemy(PhysicsEntity):
         distance = self.getPlayerDistance(player)[0]
         if distance <= self.attackRadius:
             self.status = 'attack'
+
         elif distance <= self.sightRadius:
             self.status = 'move'
+            self.setAction('run')
         else:
             self.status = 'idle'
 
@@ -162,3 +181,12 @@ class Enemy(PhysicsEntity):
         self.rect1.x = self.pos[0] - offset[0]
         self.rect1.y = self.pos[1] - offset[1]
         super().draw(surface, offset)
+
+
+class Enemys(pygame.sprite.Group):
+    def __init__(self, *enemys):
+        super().__init__(*enemys)
+
+    def draw(self, surface, offset):
+        for i in self.sprites():
+            i.draw(surface, offset)

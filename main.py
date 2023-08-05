@@ -1,7 +1,7 @@
 import sys
 import pygame
 
-from scripts.entities import PhysicsEntity, Player, Enemy
+from scripts.entities import Player, Enemy, Enemys
 from scripts.utils import loadImage, loadImages, Animation
 from scripts.tilemap import Tilemap, dungeonGeneration
 
@@ -23,14 +23,24 @@ class Game:
             'player': loadImage('entities/player.png'),
             'player/idle': Animation(loadImages('entities/player/idle'), imgDur=6),
             'player/run': Animation(loadImages('entities/player/run'), imgDur=4),
-            'enemy1/idle': Animation(loadImages('entities/enemy1/idle'), imgDur=4)
+            'player/attack': Animation(loadImages('entities/player/attack'), imgDur=3),
+            'player/hurt': Animation(loadImages('entities/player/hurt'), imgDur=5),
+            'player/death': Animation(loadImages('entities/player/death'), imgDur=4),
+            'enemy1/idle': Animation(loadImages('entities/enemy1/idle'), imgDur=4),
+            'enemy1/run': Animation(loadImages('entities/enemy1/run'), imgDur=3),
+            'enemy1/attack': Animation(loadImages('entities/enemy1/attack'), imgDur=2),
+            'enemy1/death': Animation(loadImages('entities/enemy1/death'), imgDur=4),
+            'enemy1/hurt': Animation(loadImages('entities/enemy1/hurt'), imgDur=4)
         }
 
-        self.player = Player(self, (50, 50), (28, 62))
+        self.player = Player(self, (50, 50), (28, 62), (-48, -30))
 
-        self.enemy1 = Enemy(self, 'enemy1', (500, 500), (256, 256), 500, 100, 1)
+        self.enemy1 = Enemy(self, 'enemy1', (500, 500), (128, 100), 500, 100, 1, (-55, -105))
+        self.enemys = Enemys(self.enemy1)  # Remove this line
 
-        self.tilemap = Tilemap(self, tileSize = 32)
+        self.enemys.add(self.enemy1)
+
+        self.tilemap = Tilemap(self, tileSize=32)
 
         self.scroll = [0, 0]
 
@@ -41,7 +51,6 @@ class Game:
     def main(self):
         while self.running:
             dt = self.clock.tick(60) / 1000
-
 
             # Sets caption to FPS to help visualize
             pygame.display.set_caption(str(self.clock.get_fps()))
@@ -62,6 +71,8 @@ class Game:
                         self.movement['left'] = True
                     if event.key == pygame.K_d:
                         self.movement['right'] = True
+                    if event.key == pygame.K_SPACE:
+                        self.player.setAction('attack')
 
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_w:
@@ -80,19 +91,28 @@ class Game:
             self.scroll[1] += (self.player.rect().centery - self.screen.get_height() / 2 - self.scroll[1]) / 30
             renderScroll = (int(self.scroll[0]), int(self.scroll[1]))
 
-            self.enemy1.update(self.tilemap, renderScroll, self.player, dt)
+            for i in self.enemys.sprites():
+                if i.death and i.action != 'death':
+                    self.enemys.remove(i)
+                self.enemys.update(i, self.tilemap, renderScroll, self.player, dt)
+            # self.enemy1.update(self.tilemap, renderScroll, self.player, dt)
 
             # Draw to the Screen
             self.screen.fill((0, 0, 0))
 
             self.tilemap.draw(self.screen, renderScroll)
 
-            self.enemy1.draw(self.screen, renderScroll)
+            self.enemys.draw(self.screen, renderScroll)
+            # self.enemy1.draw(self.screen, renderScroll)
 
             self.player.draw(self.screen, renderScroll)
 
             for rect in self.tilemap.physicsRectsAround(self.player.pos):
                 pygame.draw.rect(self.screen, (255, 0, 0), rect, 1)
+
+            print(self.player.health)
+
+            pygame.draw.rect(self.screen, (255, 0, 0), (10, 10, 2 * self.player.health, 25))
 
             # self.dungeonGenerator.draw(self.screen)
 
