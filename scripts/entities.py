@@ -76,9 +76,11 @@ class Player(PhysicsEntity):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE]:
             self.setAction('attack')
+        elif keys[pygame.K_v]:
+            self.setAction('dash')
         elif movement[0] != 0 or movement[1] != 0:
             self.setAction('run')
-        else:
+        elif not self.action == 'dash':
             self.setAction('idle')
 
     def draw(self, surface, offset):
@@ -183,7 +185,7 @@ class Enemy(PhysicsEntity):
         super().draw(surface, offset)
 
 
-class Enemys(pygame.sprite.Group):
+class Entities(pygame.sprite.Group):
     def __init__(self, *enemys):
         super().__init__(*enemys)
 
