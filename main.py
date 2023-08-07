@@ -1,8 +1,6 @@
 import sys
 import pygame
 
-
-\
 from scripts.entities import Player, Enemy, Entities
 from scripts.utils import loadImage, loadImages, Animation
 from scripts.tilemap import Tilemap, dungeonGeneration
@@ -49,7 +47,7 @@ class Game:
 
         self.running = True
 
-        self.dungeonGenerator = dungeonGeneration((1920 // 3, 1080 // 3), 25, 100, self.tilemap)
+        self.dungeonGenerator = dungeonGeneration((1920 // 2, 1080 // 2), 25, 100, self.tilemap)
 
     def main(self):
         while self.running:
@@ -67,10 +65,10 @@ class Game:
                 # Get key presses
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
-                        self.player.setAction('attack')
+                        self.player1.setAction('attack')
                     if event.key == pygame.K_v:
-                        self.player.setAction('dash')
-                    if self.player.action != 'attack':
+                        self.player1.setAction('dash')
+                    if self.player1.action != 'attack':
                         if event.key == pygame.K_w:
                             self.movement['up'] = True
                         if event.key == pygame.K_s:

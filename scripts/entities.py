@@ -1,6 +1,5 @@
 import pygame
 
-
 class PhysicsEntity(pygame.sprite.Sprite):
     def __init__(self, game, entityType, pos, size, offset=(0, 0)):
         super().__init__()
@@ -127,7 +126,7 @@ class Enemy(PhysicsEntity):
             self.setAction('death')
             self.death = True
 
-        elif self.rect1.colliderect(player.attackRectLeft) and player.flip and player.action == 'attack':
+        elif (self.rect1.colliderect(player.attackRectLeft) and player.flip and player.action == 'attack') or (self.rect1.colliderect(player.attackRectRight) and  not player.flip and player.action == 'attack'):
             self.health -= 10
             print('enemy', self.health)
             self.setAction('hurt')
@@ -149,8 +148,6 @@ class Enemy(PhysicsEntity):
             new_x -= self.pos[0]
             new_y -= self.pos[1]
             movement = (new_x, new_y)
-
-
 
         elif self.action != 'death' or self.animation.frame == 0:
             self.setAction('idle')
