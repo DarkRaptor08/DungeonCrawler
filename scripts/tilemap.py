@@ -7,6 +7,8 @@ from scipy.spatial import distance
 import numpy as np
 import networkx as nx
 
+from scripts.spawnRoom import *
+
 NEIGHBOR_OFFSETS = [(-1, 0), (0, 0), (1, 0), (-1, 1), (1, 1), (-1, 2), (0, 2), (1, 2)]
 PHYSICS_TILES = {'bricks'}
 
@@ -15,7 +17,7 @@ class Tilemap:
         self.game = game
         self.tileSize = tileSize
         self.tileMap = {}
-        self.offgridTiles = []
+        self.otherTiles = {}
 
         # for i in range(100):
         #     self.tileMap[str( i) + ';0'] = {'type': 'bricks', 'variant': 1, 'rotation': , 'pos': (i, 0)}
@@ -46,16 +48,30 @@ class Tilemap:
 
     def draw(self, surf, offset):
         amount = 0
-        for tile in self.offgridTiles:
-            surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0] - offset[0], tile['pos'] - offset[1]))
 
-        for x in range(offset[0] // self.tileSize, (offset[0] + surf.get_width()) // self.tileSize + 1):
-            for y in range(offset[1] // self.tileSize, (offset[1] + surf.get_height()) // self.tileSize + 1):
+        for x in range(offset[0] // self.tileSize, (offset[0] + surf.get_width()) // self.tileSize + 8):
+            for y in range(offset[1] // self.tileSize, (offset[1] + surf.get_height()) // self.tileSize + 8):
                 loc = str(x) + ';' + str(y)
                 if loc in self.tileMap:
                     tile = self.tileMap[loc]
+
                     surf.blit(pygame.transform.rotate(self.game.assets[tile['type']][tile['variant']], tile['rotation']), (tile['pos'][0] * self.tileSize - offset[0], tile['pos'][1] * self.tileSize - offset[1]))
                     pygame.draw.rect(surf, (255, 0, 0), pygame.Rect(tile['pos'][0] * self.tileSize - offset[0], tile['pos'][1] * self.tileSize - offset[1], self.tileSize, self.tileSize), 1)
+                    amount += 1
+
+        amount = 0
+        for x in range(offset[0] // self.tileSize, (offset[0] + surf.get_width()) // self.tileSize + 1):
+            for y in range(offset[1] // self.tileSize, (offset[1] + surf.get_height()) // self.tileSize + 1):
+                loc = str(x) + ';' + str(y)
+                if loc in self.otherTiles:
+                    tile = self.otherTiles[loc]
+                    surf.blit(
+                        pygame.transform.rotate(self.game.assets[tile['type']][tile['variant']], tile['rotation']),
+                        (tile['pos'][0] * self.tileSize - offset[0], tile['pos'][1] * self.tileSize - offset[1] - self.game.assets[tile['type']][tile['variant']].get_height())
+                    )
+                    pygame.draw.rect(surf, (255, 0, 0), pygame.Rect(tile['pos'][0] * self.tileSize - offset[0],
+                                                                    tile['pos'][1] * self.tileSize - offset[1],
+                                                                    self.tileSize, self.tileSize), 1)
                     amount += 1
 
         # for loc in self.tileMap:
@@ -77,7 +93,6 @@ class dungeonGeneration:
         self.hallwaysVert = []
 
         self.tilemap = tileMap
-        print(self.mainRoomRects)
 
         self.generate()
 
@@ -113,14 +128,14 @@ class dungeonGeneration:
 
             roomRect = pygame.Rect(x, y, width, height)
             while self.checkCollision(collisionRects, roomRect):
-                print("Room collision")
+
                 x, y = self.getRandomPointInEllipse(self.dungeonSize[0], self.dungeonSize[1])
 
-                width = len(room[0]) + 4
+                width = len(room[0])
 
-                height = len(room) + 4
+                height = len(room)
 
-                roomRect = pygame.Rect(x - 2, y - 2, width, height)
+                roomRect = pygame.Rect(x , y , width, height)
 
             roomRects.append(roomRect)
             collisionRects.append(roomRect)
@@ -128,13 +143,17 @@ class dungeonGeneration:
         return roomRects, rooms
 
     def generate(self):
-        self.mainRoomRects, self.mainRooms = self.generateRooms(self.mainRoomsAmount, [], scripts.rooms.mainRoomList)
 
-        self.medRoomsRects, self.medRooms = self.generateRooms(self.medRoomsAmount, self.mainRoomRects, scripts.rooms.medRoomList)
+        spawn = spawnRoom
+        spawnRect = [pygame.Rect(-10, 264, 22, 24)]
+
+        self.mainRoomRects, self.mainRooms = self.generateRooms(self.mainRoomsAmount, spawnRect, scripts.rooms.mainRoomList)
+
+        self.medRoomsRects, self.medRooms = self.generateRooms(self.medRoomsAmount, self.mainRoomRects + spawnRect, scripts.rooms.medRoomList)
 
         points = []
-        for rect in self.mainRoomRects:
-            points.append((rect.x + rect.width / 2, rect.y + rect.height / 2))
+        for rect in self.mainRoomRects + spawnRect:
+            points.append(((rect.x + rect.width) / 2, (rect.y + rect.height) / 2))
 
         tri = Delaunay(points)
 
@@ -142,6 +161,7 @@ class dungeonGeneration:
         for simp in tri.simplices:
             for i, j in zip(simp, np.roll(simp, -1)):
                 G.add_edge(points[i], points[j], weight=distance.euclidean(points[i], points[j]))
+
 
         mst = nx.minimum_spanning_tree(G)
 
@@ -291,7 +311,7 @@ class dungeonGeneration:
             10: ['bricks', 0],
             11: ['floorTiles', 0],
             12: ['bricks', 4],
-            13: ['bricks', 5]
+            13: ['bricks', 6]
         }
 
         for i, room in enumerate(self.mainRooms):
@@ -326,13 +346,52 @@ class dungeonGeneration:
                     if string in self.tilemap.tileMap and (self.tilemap.tileMap[string]['type'] == 'floorTiles' or tile == 7):
                         tile = 11
                     else:
+                        if string in self.tilemap.tileMap and tile == 1:
+                            print('x', x, 'y', y)
                         if string in self.tilemap.tileMap and (self.tilemap.tileMap[string]['type'] == 'floorTiles' or tile == 7):
                             tile = 6
                         elif string in self.tilemap.tileMap and self.tilemap.tileMap[string]['type'] == 'bricks' and self.tilemap.tileMap[string]['variant'] == 1 and tile == 7:
                             tile = 13
                         self.tilemap.tileMap[string] = {'type': tileDict[tile][0], 'variant': tileDict[tile][1], 'rotation': 90 * point, 'pos': (x + self.medRoomsRects[i].x, y + self.medRoomsRects[i].y)}
 
+        props = {
+            30: ['props', 27],
+            35: ['props', 29],
+        }
+
+        for y, row in enumerate(spawn):
+            for x, tile in enumerate(row):
+                print('tile ', tile, x, y)
+                string = f'{x + spawnRect[0].x};{y + spawnRect[0].y}'
+                point = round((tile - int(tile)) * 10)
+                print(point)
+                if tile == 8.2:
+                    tile = 12
+                    point = 0
+                tile = int(tile)
+
+                if spawnRoomProps[y][x] != -1:
+                    self.tilemap.otherTiles[string] = {'type': props[spawnRoomProps[y][x]][0], 'variant': props[spawnRoomProps[y][x]][1],
+                                                    'rotation': 90 * point,
+                                                    'pos': (x + spawnRect[0].x, y + spawnRect[0].y)}
+
+                if string in self.tilemap.tileMap and (
+                        self.tilemap.tileMap[string]['type'] == 'floorTiles' or tile == 7):
+                    tile = 11
+                else:
+                    if string in self.tilemap.tileMap and tile == 1:
+                        print('x', x, 'y', y)
+                    if string in self.tilemap.tileMap and (
+                            self.tilemap.tileMap[string]['type'] == 'floorTiles' or tile == 7):
+                        tile = 6
+                    elif string in self.tilemap.tileMap and self.tilemap.tileMap[string]['type'] == 'bricks' and \
+                            self.tilemap.tileMap[string]['variant'] == 1 and tile == 7:
+                        tile = 13
+                    self.tilemap.tileMap[string] = {'type': tileDict[tile][0], 'variant': tileDict[tile][1],
+                                                    'rotation': 90 * point,
+                                                    'pos': (x + spawnRect[0].x, y + spawnRect[0].y)}
     def draw(self, surf):
+
         for rect in self.medRoomsRects:
             pygame.draw.rect(surf, (0, random.randint(0, 255), 0), rect)
         for rect in self.mainRoomRects:

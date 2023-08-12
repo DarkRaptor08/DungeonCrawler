@@ -152,7 +152,6 @@ class Enemy(PhysicsEntity):
         elif self.action != 'death' or self.animation.frame == 0:
             self.setAction('idle')
 
-
         super().update(tilemap, movement=movement)
 
     def getStatus(self, player):

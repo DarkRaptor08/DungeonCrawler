@@ -20,6 +20,7 @@ class Game:
             'bricks': loadImages('tiles/brick'),
             'walls': loadImages('tiles/walls'),
             'floorTiles': loadImages('tiles/floorTiles'),
+            'props': loadImages('tiles/props'),
             'player': loadImage('entities/player.png'),
             'player/idle': Animation(loadImages('entities/player/idle'), imgDur=6),
             'player/run': Animation(loadImages('entities/player/run'), imgDur=4),
@@ -34,7 +35,9 @@ class Game:
             'enemy1/hurt': Animation(loadImages('entities/enemy1/hurt'), imgDur=4)
         }
 
-        self.player1 = Player(self, (50, 50), (28, 62), (-48, -30))
+        print(self.assets['props'])
+
+        self.player1 = Player(self, (95 - 280, 8464 + 320), (28, 62), (-48, -30))
 
         self.enemy1 = Enemy(self, 'enemy1', (500, 500), (128, 100), 500, 100, 1, (-55, -105))
         self.enemys = Entities(self.enemy1)
