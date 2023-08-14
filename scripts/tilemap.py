@@ -56,7 +56,7 @@ class Tilemap:
                     tile = self.tileMap[loc]
 
                     surf.blit(pygame.transform.rotate(self.game.assets[tile['type']][tile['variant']], tile['rotation']), (tile['pos'][0] * self.tileSize - offset[0], tile['pos'][1] * self.tileSize - offset[1]))
-                    pygame.draw.rect(surf, (255, 0, 0), pygame.Rect(tile['pos'][0] * self.tileSize - offset[0], tile['pos'][1] * self.tileSize - offset[1], self.tileSize, self.tileSize), 1)
+                    #pygame.draw.rect(surf, (255, 0, 0), pygame.Rect(tile['pos'][0] * self.tileSize - offset[0], tile['pos'][1] * self.tileSize - offset[1], self.tileSize, self.tileSize), 1)
                     amount += 1
 
         amount = 0
@@ -69,9 +69,9 @@ class Tilemap:
                         pygame.transform.rotate(self.game.assets[tile['type']][tile['variant']], tile['rotation']),
                         (tile['pos'][0] * self.tileSize - offset[0], tile['pos'][1] * self.tileSize - offset[1] - self.game.assets[tile['type']][tile['variant']].get_height())
                     )
-                    pygame.draw.rect(surf, (255, 0, 0), pygame.Rect(tile['pos'][0] * self.tileSize - offset[0],
-                                                                    tile['pos'][1] * self.tileSize - offset[1],
-                                                                    self.tileSize, self.tileSize), 1)
+                    #pygame.draw.rect(surf, (255, 0, 0), pygame.Rect(tile['pos'][0] * self.tileSize - offset[0],
+                                                                        #tile['pos'][1] * self.tileSize - offset[1],
+                                                                       # self.tileSize, self.tileSize), 1)
                     amount += 1
 
         # for loc in self.tileMap:
@@ -153,7 +153,8 @@ class dungeonGeneration:
 
         points = []
         for rect in self.mainRoomRects + spawnRect:
-            points.append(((rect.x + rect.width) / 2, (rect.y + rect.height) / 2))
+            points.append((rect.centerx / 2, rect.centery / 2))
+
 
         tri = Delaunay(points)
 
@@ -177,7 +178,7 @@ class dungeonGeneration:
                 mergedTreeDiagram.add_edge((x1, y2), (x2, y2))
 
         points = []
-        for rect in self.mainRoomRects + self.medRoomsRects:
+        for rect in self.mainRoomRects + self.medRoomsRects + spawnRect:
             points.append(rect.center)
 
         tri = Delaunay(points)
@@ -215,16 +216,61 @@ class dungeonGeneration:
                     rect = pygame.Rect(x2 - 3, y1 - 4, x1 - x2 + 1 * 6, 1 * 8)
                 self.hallwaysHoriz.append(rect)
 
+
+        for rect in self.hallwaysVert:
+            for y in range(1, rect.height):
+                for x in range(1, rect.width):
+                    string = str(x + rect.x) + ';' + str(y + rect.y)
+                    if (string in self.tilemap.tileMap and self.tilemap.tileMap[string]['type'] == 'floorTiles'):
+                        pass
+                    elif x == 1:
+                        if string in self.tilemap.tileMap: # and self.tilemap.tileMap[string]['type'] == 'bricks' and self.tilemap.tileMap[string]['variant'] == 1:
+                            pass
+                        elif y == 0:
+                            if string in self.tilemap.tileMap and self.tilemap.tileMap[string]['type'] == 'walls' and self.tilemap.tileMap[string]['variant'] == 0:
+                                pass
+                            else:
+                                if string in self.tilemap.tileMap and self.tilemap.tileMap[string]['type'] == 'bricks' and self.tilemap.tileMap[string]['variant'] == 0:
+                                    self.tilemap.tileMap[string] = {'type': 'bricks', 'variant': 5, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
+                                if y == rect.height - 1:
+                                    self.tilemap.tileMap[string] = {'type': 'bricks', 'variant': 2, 'rotation': 180, 'pos': (x + rect.x, y + rect.y)}
+                                else:
+                                    self.tilemap.tileMap[string] = {'type': 'bricks', 'variant': 1, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
+
+                        elif y == rect.height - 1:
+                            self.tilemap.tileMap[string] = {'type': 'bricks', 'variant': 1, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
+                        else:
+                            self.tilemap.tileMap[string] = {'type': 'bricks', 'variant': 1, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
+                    elif x == 5:
+
+                        if string in self.tilemap.tileMap:
+                            pass
+                        elif string in self.tilemap.tileMap and self.tilemap.tileMap[string]['type'] == 'walls' and self.tilemap.tileMap[string]['variant'] == 0:
+                            pass
+                        elif string in self.tilemap.tileMap and self.tilemap.tileMap[string]['type'] == 'bricks' and self.tilemap.tileMap[string]['variant'] == 1:
+                            pass
+                            # self.tilemap.tileMap[string] = {'type': 'bricks', 'variant': 2, 'rotation': 0,
+                            #                                 'pos': (x + rect.x, y + rect.y)}
+                        else:
+                            if y == rect.height - 1:
+                                self.tilemap.tileMap[string] = {'type': 'bricks', 'variant': 1, 'rotation': 180, 'pos': (x + rect.x, y + rect.y)}
+                            else:
+                                self.tilemap.tileMap[string] = {'type': 'bricks', 'variant': 1, 'rotation': 180, 'pos': (x + rect.x, y + rect.y)}
+                    else:
+                        self.tilemap.tileMap[string] = {'type': 'floorTiles', 'variant': 0, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
+
+
         for rect in self.hallwaysHoriz:
             for x in range(1, rect.width):
                 for y in range(1, rect.height):
+
                         if y == 1:
                             if f'{x};{y}' in self.tilemap.tileMap:
                                 pass
                             elif x == 1:
                                 self.tilemap.tileMap[str(x + rect.x) + ';' + str(y + rect.y)] = {'type': 'bricks', 'variant': 2, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
                             elif x == rect.width - 1:
-                                self.tilemap.tileMap[str(x + rect.x) + ';' + str(y + rect.y)] = {'type': 'bricks', 'variant': 4, 'rotation': 180, 'pos': (x + rect.x, y + rect.y)}
+                                self.tilemap.tileMap[str(x + rect.x) + ';' + str(y + rect.y)] = {'type': 'bricks', 'variant': 3, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
                             else:
                                 self.tilemap.tileMap[str(x + rect.x) + ';' + str(y + rect.y)] = {'type': 'bricks', 'variant': 0, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
                         elif y == 2:
@@ -249,11 +295,11 @@ class dungeonGeneration:
                             if f'{x};{y}' in self.tilemap.tileMap:
                                 pass
                             elif x == 1:
-                                self.tilemap.tileMap[str(x + rect.x) + ';' + str(y + rect.y)] = {'type': 'bricks', 'variant': 1, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
+                                self.tilemap.tileMap[str(x + rect.x) + ';' + str(y + rect.y)] = {'type': 'bricks', 'variant': 3, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
                             elif x == rect.width - 1:
-                                self.tilemap.tileMap[str(x + rect.x) + ';' + str(y + rect.y)] = {'type': 'bricks', 'variant': 1, 'rotation': 180, 'pos': (x + rect.x, y + rect.y)}
+                                self.tilemap.tileMap[str(x + rect.x) + ';' + str(y + rect.y)] = {'type': 'bricks', 'variant': 7, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
                             else:
-                                self.tilemap.tileMap[str(x + rect.x) + ';' + str(y + rect.y)] = {'type': 'bricks', 'variant': 1, 'rotation': 90, 'pos': (x + rect.x, y + rect.y)}
+                                self.tilemap.tileMap[str(x + rect.x) + ';' + str(y + rect.y)] = {'type': 'bricks', 'variant': 6, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
                         else:
                             if f'{x};{y}' in self.tilemap.tileMap:
                                 self.tilemap.tileMap[str(x + rect.x) + ';' + str(y + rect.y)] = {'type': 'floorTiles', 'variant': 0, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
@@ -264,39 +310,6 @@ class dungeonGeneration:
                                 self.tilemap.tileMap[str(x + rect.x) + ';' + str(y + rect.y)] = {'type': 'bricks', 'variant': 1, 'rotation': 180, 'pos': (x + rect.x, y + rect.y)}
                             else:
                                 self.tilemap.tileMap[str(x + rect.x) + ';' + str(y + rect.y)] = {'type': 'floorTiles', 'variant': 0, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
-
-        for rect in self.hallwaysVert:
-            for y in range(1, rect.height):
-                for x in range(1, rect.width):
-                    string = str(x + rect.x) + ';' + str(y + rect.y)
-                    if string in self.tilemap.tileMap and self.tilemap.tileMap[string]['type'] == 'floorTiles':
-                        pass
-                    elif x == 1:
-                        if y == 0:
-                            if string in self.tilemap.tileMap and self.tilemap.tileMap[string]['type'] == 'walls' and self.tilemap.tileMap[string]['variant'] == 0:
-                                pass
-                            else:
-                                if string in self.tilemap.tileMap and self.tilemap.tileMap[string]['type'] == 'bricks' and self.tilemap.tileMap[string]['variant'] == 0:
-                                    self.tilemap.tileMap[string] = {'type': 'bricks', 'variant': 5, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
-                                if y == rect.height - 1:
-                                    self.tilemap.tileMap[string] = {'type': 'bricks', 'variant': 2, 'rotation': 180, 'pos': (x + rect.x, y + rect.y)}
-                                else:
-                                    self.tilemap.tileMap[string] = {'type': 'bricks', 'variant': 1, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
-
-                        elif y == rect.height - 1:
-                            self.tilemap.tileMap[string] = {'type': 'bricks', 'variant': 1, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
-                        else:
-                            self.tilemap.tileMap[string] = {'type': 'bricks', 'variant': 1, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
-                    elif x == 5:
-                        if string in self.tilemap.tileMap and self.tilemap.tileMap[string]['type'] == 'walls' and self.tilemap.tileMap[string]['variant'] == 0:
-                            pass
-                        else:
-                            if y == rect.height - 1:
-                                self.tilemap.tileMap[string] = {'type': 'bricks', 'variant': 2, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
-                            else:
-                                self.tilemap.tileMap[string] = {'type': 'bricks', 'variant': 1, 'rotation': 180, 'pos': (x + rect.x, y + rect.y)}
-                    else:
-                        self.tilemap.tileMap[string] = {'type': 'floorTiles', 'variant': 0, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
 
         tileDict = {
             1: ['grass', 1],
@@ -311,7 +324,8 @@ class dungeonGeneration:
             10: ['bricks', 0],
             11: ['floorTiles', 0],
             12: ['bricks', 4],
-            13: ['bricks', 6]
+            13: ['bricks', 6],
+            14: ['bricks', 7]
         }
 
         for i, room in enumerate(self.mainRooms):
@@ -319,7 +333,6 @@ class dungeonGeneration:
                 for x, tile in enumerate(row):
                     string = f'{x + self.medRoomsRects[i].x};{y + self.medRoomsRects[i].y}'
                     point = round((tile - int(tile)) * 10)
-                    print(point)
                     if tile == 8.2:
                         tile = 12
                         point = 0
@@ -338,7 +351,6 @@ class dungeonGeneration:
                 for x, tile in enumerate(row):
                     string = f'{x + self.medRoomsRects[i].x};{y + self.medRoomsRects[i].y}'
                     point = round((tile - int(tile)) * 10)
-                    print(point)
                     if tile == 8.2:
                         tile = 12
                         point = 0
@@ -346,8 +358,7 @@ class dungeonGeneration:
                     if string in self.tilemap.tileMap and (self.tilemap.tileMap[string]['type'] == 'floorTiles' or tile == 7):
                         tile = 11
                     else:
-                        if string in self.tilemap.tileMap and tile == 1:
-                            print('x', x, 'y', y)
+                        # if string in self.tilemap.tileMap and tile == 1:
                         if string in self.tilemap.tileMap and (self.tilemap.tileMap[string]['type'] == 'floorTiles' or tile == 7):
                             tile = 6
                         elif string in self.tilemap.tileMap and self.tilemap.tileMap[string]['type'] == 'bricks' and self.tilemap.tileMap[string]['variant'] == 1 and tile == 7:
@@ -361,10 +372,8 @@ class dungeonGeneration:
 
         for y, row in enumerate(spawn):
             for x, tile in enumerate(row):
-                print('tile ', tile, x, y)
                 string = f'{x + spawnRect[0].x};{y + spawnRect[0].y}'
                 point = round((tile - int(tile)) * 10)
-                print(point)
                 if tile == 8.2:
                     tile = 12
                     point = 0
@@ -379,8 +388,7 @@ class dungeonGeneration:
                         self.tilemap.tileMap[string]['type'] == 'floorTiles' or tile == 7):
                     tile = 11
                 else:
-                    if string in self.tilemap.tileMap and tile == 1:
-                        print('x', x, 'y', y)
+
                     if string in self.tilemap.tileMap and (
                             self.tilemap.tileMap[string]['type'] == 'floorTiles' or tile == 7):
                         tile = 6
@@ -390,8 +398,37 @@ class dungeonGeneration:
                     self.tilemap.tileMap[string] = {'type': tileDict[tile][0], 'variant': tileDict[tile][1],
                                                     'rotation': 90 * point,
                                                     'pos': (x + spawnRect[0].x, y + spawnRect[0].y)}
-    def draw(self, surf):
 
+        for i in range(1000):
+            for tile in self.tilemap.tileMap:
+                print(tile)
+                cords = tile.split(';')
+                print(self.tilemap.tileMap[tile]['type'])
+                if f'{int(cords[0])};{int(cords[1]) + 1}' in self.tilemap.tileMap:
+                    if self.tilemap.tileMap[f'{int(cords[0])};{int(cords[1]) + 1}']['type'] != 'walls' and self.tilemap.tileMap[tile]['type'] == 'walls':
+                        self.tilemap.tileMap.pop(tile)
+                        self.tilemap.tileMap[tile] = {'type': 'floorTiles', 'variant': 1,
+                        'rotation': 0,
+                        'pos': (int(cords[0]), int(cords[1]))}
+                        print(cords)
+                        break
+                if f'{int(cords[0])};{int(cords[1]) - 1}' in self.tilemap.tileMap:
+                    if self.tilemap.tileMap[f'{int(cords[0])};{int(cords[1]) - 1}']['type'] != 'walls' and self.tilemap.tileMap[tile]['type'] == 'walls':
+                        self.tilemap.tileMap.pop(tile)
+                        self.tilemap.tileMap[tile] = {'type': 'floorTiles', 'variant': 1,
+                                                      'rotation': 0,
+                                                      'pos': (int(cords[0]), int(cords[1]))}
+                        print(cords)
+                        break
+
+                # elif f'{int(cords[0]) + 1};{int(cords[1])}' in self.tilemap.tileMap or f'{int(cords[0])};{int(cords[1]) - 1}' in self.tilemap.tileMap and self.tilemap.tileMap[tile]['type'] == 'bricks' and self.tilemap.tileMap[tile]['variant'] == 1:
+                #     self.tilemap.tileMap.pop(tile)
+                #     self.tilemap.tileMap[tile] = {'type': 'floorTiles', 'variant': 1,
+                #                                     'rotation': 0,
+                #                                     'pos': (int(cords[0]), int(cords[1]))}
+                #     print(cords)
+                #     break
+    def draw(self, surf):
         for rect in self.medRoomsRects:
             pygame.draw.rect(surf, (0, random.randint(0, 255), 0), rect)
         for rect in self.mainRoomRects:

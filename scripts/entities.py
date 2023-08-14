@@ -85,9 +85,9 @@ class Player(PhysicsEntity):
     def draw(self, surface, offset):
         self.attackRectLeft.topleft = (self.pos[0] - offset[0] - 100 + 5 + 10 + 25, self.pos[1] - offset[1] - 25 - 25)
         self.attackRectRight.topright = (self.pos[0] - offset[0] - 100 + 5 + 205 + 2 - 25, self.pos[1] - offset[1] - 25 - 25)
-        pygame.draw.rect(surface, (200, 0, 0), self.attackRectLeft)
-        pygame.draw.rect(surface, (0, 0, 200), self.attackRectRight)
-        pygame.draw.rect(surface, (0, 255, 0), self.rect1)
+        # pygame.draw.rect(surface, (200, 0, 0), self.attackRectLeft)
+        # pygame.draw.rect(surface, (0, 0, 200), self.attackRectRight)
+        # pygame.draw.rect(surface, (0, 255, 0), self.rect1)
         self.rect1.x = self.pos[0] - offset[0]
         self.rect1.y = self.pos[1] - offset[1]
         super().draw(surface, offset)
@@ -120,7 +120,6 @@ class Enemy(PhysicsEntity):
 
         self.getStatus(player)
 
-        print(self.action)
 
         if self.health <= 0 and self.action != 'death':
             self.setAction('death')
@@ -128,14 +127,12 @@ class Enemy(PhysicsEntity):
 
         elif (self.rect1.colliderect(player.attackRectLeft) and player.flip and player.action == 'attack') or (self.rect1.colliderect(player.attackRectRight) and  not player.flip and player.action == 'attack'):
             self.health -= 10
-            print('enemy', self.health)
             self.setAction('hurt')
 
         elif self.status == 'attack':
             if self.canAct == 0:
                 self.setAction('attack')
                 self.canAct = 1
-                print('attack')
                 player.health -= 10
 
         elif self.status == 'move':

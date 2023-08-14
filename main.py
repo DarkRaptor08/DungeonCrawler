@@ -35,7 +35,6 @@ class Game:
             'enemy1/hurt': Animation(loadImages('entities/enemy1/hurt'), imgDur=4)
         }
 
-        print(self.assets['props'])
 
         self.player1 = Player(self, (95 - 280, 8464 + 320), (28, 62), (-48, -30))
 
@@ -118,8 +117,7 @@ class Game:
             for rect in self.tilemap.physicsRectsAround(self.player1.pos):
                 pygame.draw.rect(self.screen, (255, 0, 0), rect, 1)
 
-            print(self.player1.health)
-
+            pygame.draw.rect(self.screen, (0, 0, 0), (8, 8, 204, 29))
             pygame.draw.rect(self.screen, (255, 0, 0), (10, 10, 2 * self.player1.health, 25))
 
             # self.dungeonGenerator.draw(self.screen)
