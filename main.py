@@ -49,7 +49,11 @@ class Game:
 
         self.running = True
 
-        self.dungeonGenerator = dungeonGeneration((1920 // 2, 1080 // 2), 25, 100, self.tilemap)
+        self.dungeonGenerator = dungeonGeneration((1920 // 2, 1080 // 2), 10, 40, self.tilemap)
+
+        self.scroll[0] += (self.player1.rect().centerx - self.screen.get_width() / 2 - self.scroll[0]) - 1000
+        self.scroll[1] += (self.player1.rect().centery - self.screen.get_height() / 2 - self.scroll[1]) - 1000
+
 
     def main(self):
         while self.running:
@@ -90,6 +94,11 @@ class Game:
                         self.movement['left'] = False
                     if event.key == pygame.K_d:
                         self.movement['right'] = False
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    print(f'{(pygame.mouse.get_pos()[0] + self.scroll[0]) // self.tilemap.tileSize};{(pygame.mouse.get_pos()[1] + self.scroll[0]) // self.tilemap.tileSize}')
+                    if f'{(pygame.mouse.get_pos()[0] + self.scroll[0]) // self.tilemap.tileSize};{(pygame.mouse.get_pos()[1] + self.scroll[0]) // self.tilemap.tileSize}' in self.tilemap.tileMap:
+                        print(self.tilemap.tileMap[f'{(pygame.mouse.get_pos()[0] + self.scroll[0]) // self.tilemap.tileSize};{(pygame.mouse.get_pos()[1] + self.scroll[0]) // self.tilemap.tileSize}']['variant'])
 
             # Updates
             self.player1.update(self.tilemap, (self.movement['right'] - self.movement['left'], self.movement['down'] - self.movement['up']))
