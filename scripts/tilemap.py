@@ -6,6 +6,7 @@ from scipy.spatial import Delaunay
 from scipy.spatial import distance
 import numpy as np
 import networkx as nx
+from scripts.entities import Enemy
 
 from scripts.spawnRoom import *
 
@@ -84,7 +85,7 @@ class Tilemap:
 
 
 class dungeonGeneration:
-    def __init__(self, dungeonSize, mainRooms, medRooms, tileMap):
+    def __init__(self, dungeonSize, mainRooms, medRooms, tileMap, game):
         self.dungeonSize = tuple(dungeonSize)
         self.mainRoomsAmount = mainRooms
         self.medRoomsAmount = medRooms
@@ -98,6 +99,7 @@ class dungeonGeneration:
         self.hallwaysVert = []
 
         self.tilemap = tileMap
+        self.game = game
 
         self.generate()
 
@@ -150,15 +152,20 @@ class dungeonGeneration:
     def generate(self):
 
         spawn = spawnRoom
-        spawnRect = [pygame.Rect(-20, 264, 22, 24)]
+        spawnRect = [pygame.Rect(-15, 264, 22, 24)]
+        boss = endRoom
+        bossRect = [pygame.Rect(1086, 264, 35, 35)]
 
-        self.mainRoomRects, self.mainRooms = self.generateRooms(self.mainRoomsAmount, spawnRect, scripts.rooms.mainRoomList)
+        self.mainRoomRects, self.mainRooms = self.generateRooms(self.mainRoomsAmount, spawnRect + bossRect, mainRoomList)
 
-        self.medRoomsRects, self.medRooms = self.generateRooms(self.medRoomsAmount, self.mainRoomRects + spawnRect, scripts.rooms.medRoomList)
+        self.medRoomsRects, self.medRooms = self.generateRooms(self.medRoomsAmount, self.mainRoomRects + spawnRect + bossRect, scripts.rooms.medRoomList)
 
         points = []
 
         points.append((spawnRect[0].midright[0], spawnRect[0].midright[1]))
+
+        points.append((bossRect[0].midleft[0], bossRect[0].midleft[1]))
+
 
         for rect in self.mainRoomRects:
             # points.append(rect.midleft)
@@ -189,7 +196,7 @@ class dungeonGeneration:
                 mergedTreeDiagram.add_edge((x1, y2), (x2, y2))
 
         points = []
-        for rect in self.mainRoomRects + self.medRoomsRects + spawnRect:
+        for rect in self.mainRoomRects + self.medRoomsRects + spawnRect + bossRect:
             points.append(rect.center)
 
         tri = Delaunay(points)
@@ -246,7 +253,17 @@ class dungeonGeneration:
 
 
         props = {
+            0: ['props', 0],
+            1: ['props', 0],
+            7: ['props', 6],
+            10: ['props', 9],
+            18: ['props', 17],
+            19: ['props', 18],
+            25: ['props', 25],
             30: ['props', 27],
+            32: ['props', 31],
+            33: ['props', 32],
+            34: ['props', 28],
             35: ['props', 29],
         }
 
@@ -261,8 +278,8 @@ class dungeonGeneration:
 
                 if spawnRoomProps[y][x] != -1:
                     self.tilemap.otherTiles[string] = {'type': props[spawnRoomProps[y][x]][0], 'variant': props[spawnRoomProps[y][x]][1],
-                                                    'rotation': 90 * point,
-                                                    'pos': (x + spawnRect[0].x, y + spawnRect[0].y)}
+                                                       'rotation': 90 * point,
+                                                      'pos': (x + spawnRect[0].x, y + spawnRect[0].y)}
 
                 if string in self.tilemap.tileMap and (
                         self.tilemap.tileMap[string]['type'] == 'floorTiles' or tile == 7):
@@ -279,23 +296,32 @@ class dungeonGeneration:
                                                     'rotation': 90 * point,
                                                     'pos': (x + spawnRect[0].x, y + spawnRect[0].y)}
 
-        for i, room in enumerate(self.mainRooms):
-            for y, row in enumerate(room):
-                for x, tile in enumerate(row):
-                    string = f'{x + self.medRoomsRects[i].x};{y + self.medRoomsRects[i].y}'
-                    point = round((tile - int(tile)) * 10)
-                    if tile == 8.2:
-                        tile = 12
-                        point = 0
-                    tile = int(tile)
-                    if string in self.tilemap.tileMap and (self.tilemap.tileMap[string]['type'] == 'floorTiles' or tile == 7):
-                        tile = 11
-                    else:
-                        if string in self.tilemap.tileMap and (self.tilemap.tileMap[string]['type'] == 'floorTiles' or tile == 7):
-                            tile = 6
-                        elif string in self.tilemap.tileMap and self.tilemap.tileMap[string]['type'] == 'bricks' and self.tilemap.tileMap[string]['variant'] == 1 and tile == 7:
-                            tile = 13
-                        self.tilemap.tileMap[string] = {'type': tileDict[tile][0], 'variant': tileDict[tile][1], 'rotation': 90 * point, 'pos': (x + self.medRoomsRects[i].x, y + self.medRoomsRects[i].y)}
+        for y, row in enumerate(boss):
+            for x, tile in enumerate(row):
+                string = f'{x + bossRect[0].x};{y + bossRect[0].y}'
+                point = round((tile - int(tile)) * 10)
+                if tile == 8.2:
+                    tile = 12
+                    point = 0
+                tile = int(tile)
+
+                if endRoom_props[y][x] != -1:
+                    self.tilemap.otherTiles[string] = {'type': props[endRoom_props[y][x]][0], 'variant': props[endRoom_props[y][x]][1],
+                                                       'rotation': 90 * point,
+                                                       'pos': (x + bossRect[0].x, y + bossRect[0].y)}
+                if string in self.tilemap.tileMap and (
+                        self.tilemap.tileMap[string]['type'] == 'floorTiles' or tile == 7):
+                    tile = 11
+                else:
+                    if string in self.tilemap.tileMap and (
+                            self.tilemap.tileMap[string]['type'] == 'floorTiles' or tile == 7):
+                        tile = 6
+                    elif string in self.tilemap.tileMap and self.tilemap.tileMap[string]['type'] == 'bricks' and \
+                            self.tilemap.tileMap[string]['variant'] == 1 and tile == 7:
+                        tile = 13
+                    self.tilemap.tileMap[string] = {'type': tileDict[tile][0], 'variant': tileDict[tile][1],
+                                                    'rotation': 90 * point,
+                                                    'pos': (x + bossRect[0].x, y + bossRect[0].y)}
 
         for i, room in enumerate(self.medRooms):
             for y, row in enumerate(room):
@@ -315,6 +341,53 @@ class dungeonGeneration:
                         elif string in self.tilemap.tileMap and self.tilemap.tileMap[string]['type'] == 'bricks' and self.tilemap.tileMap[string]['variant'] == 1 and tile == 7:
                             tile = 13
                         self.tilemap.tileMap[string] = {'type': tileDict[tile][0], 'variant': tileDict[tile][1], 'rotation': 90 * point, 'pos': (x + self.medRoomsRects[i].x, y + self.medRoomsRects[i].y)}
+
+
+        enemies = []
+        print(self.mainRooms)
+        for i, room in enumerate(self.mainRooms):
+            print(i)
+            for a, g in enumerate(mainRoomList):
+                if room == g:
+                    roommainlist = a
+            print(roommainlist)
+
+            for y, row in enumerate(room):
+                for x, tile in enumerate(row):
+                    string = f'{x + self.medRoomsRects[i].x};{y + self.medRoomsRects[i].y}'
+                    point = round((tile - int(tile)) * 10)
+                    if tile == 8.2:
+                        tile = 12
+                        point = 0
+                    tile = int(tile)
+                    if string in self.tilemap.tileMap and (
+                            self.tilemap.tileMap[string]['type'] == 'floorTiles' or tile == 7):
+                        tile = 11
+                    else:
+                        # if string in self.tilemap.tileMap and tile == 1:
+                        if string in self.tilemap.tileMap and (
+                                self.tilemap.tileMap[string]['type'] == 'floorTiles' or tile == 7):
+                            tile = 6
+                        elif string in self.tilemap.tileMap and self.tilemap.tileMap[string]['type'] == 'bricks' and \
+                                self.tilemap.tileMap[string]['variant'] == 1 and tile == 7:
+                            tile = 13
+                        self.tilemap.tileMap[string] = {'type': tileDict[tile][0], 'variant': tileDict[tile][1],
+                                                        'rotation': 90 * point, 'pos': (
+                            x + self.medRoomsRects[i].x, y + self.medRoomsRects[i].y)}
+
+                    if mainRoomPropsList[roommainlist][y][x] != -1:
+                        self.tilemap.otherTiles[string] = {'type': props[mainRoomPropsList[roommainlist][y][x]][0],
+                                                           'variant': props[mainRoomPropsList[roommainlist][y][x]][1],
+                                                           'rotation': 90 * point,
+                                                           'pos': (x + self.mainRoomRects[i].x, y + self.mainRoomRects[i].y)}
+
+                    if mainRoomEnemies[roommainlist][y][x] != -1:
+                        enemies.append(Enemy(self.game, 'enemy1', ((x + self.mainRoomRects[i].x) * 32, (y + self.mainRoomRects[i].y) * 32), (128-16, 100-16), 500, 100, 1, (-55-8, -105-8)))
+
+
+
+        print(enemies)
+        self.game.enemys = enemies
 
         for rect in self.hallwaysHoriz:
             for x in range(1, rect.width):
@@ -517,6 +590,7 @@ class dungeonGeneration:
                                 self.tilemap.tileMap[string] = {'type': 'bricks', 'variant': 1, 'rotation': 180, 'pos': (x + rect.x, y + rect.y)}
                     else:
                         self.tilemap.tileMap[string] = {'type': 'floorTiles', 'variant': 0, 'rotation': 0, 'pos': (x + rect.x, y + rect.y)}
+
 
 
 

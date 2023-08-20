@@ -4,20 +4,21 @@ import pygame
 
 BASE_IMG_PATH = 'data/images/'
 
-def loadImage(path):
+def loadImage(path, scale = 1):
     img = pygame.image.load(BASE_IMG_PATH + path).convert()
     img.set_colorkey((255, 255, 255))
+    img = pygame.transform.scale_by(img, scale)
     return img.convert()
 
-def loadImages(path):
+def loadImages(path, scale = 1):
     images = []
     for img_name in os.listdir(BASE_IMG_PATH + path):
-        images.append(loadImage(path + '/' + img_name))
+        images.append(loadImage(path + '/' + img_name, scale))
 
     return images
 
 class Animation:
-    def __init__(self, images, imgDur=5, loop=True):
+    def __init__(self, images, imgDur=5, loop=True, scale = 1):
         self.images = images
         self.loop = loop
         self.imgDuration = imgDur

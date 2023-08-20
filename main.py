@@ -1,7 +1,7 @@
 import sys
 import pygame
 
-from scripts.entities import Player, Enemy, Entities
+from scripts.entities import *
 from scripts.utils import loadImage, loadImages, Animation
 from scripts.tilemap import Tilemap, dungeonGeneration
 
@@ -28,20 +28,23 @@ class Game:
             'player/hurt': Animation(loadImages('entities/player/hurt'), imgDur=5),
             'player/death': Animation(loadImages('entities/player/death'), imgDur=4),
             'player/dash': Animation(loadImages('entities/player/dash'), imgDur=10, loop=False),
-            'enemy1/idle': Animation(loadImages('entities/enemy1/idle'), imgDur=4),
+            'enemy1/idle': Animation(loadImages('entities/enemy1/idle'), imgDur=6),
             'enemy1/run': Animation(loadImages('entities/enemy1/run'), imgDur=3),
             'enemy1/attack': Animation(loadImages('entities/enemy1/attack'), imgDur=2),
             'enemy1/death': Animation(loadImages('entities/enemy1/death'), imgDur=4),
-            'enemy1/hurt': Animation(loadImages('entities/enemy1/hurt'), imgDur=4)
+            'enemy1/hurt': Animation(loadImages('entities/enemy1/hurt'), imgDur=4),
+            'enemy2/idle': Animation(loadImages('entities/enemy2/idle'), imgDur=4),
+            'boss/idle': Animation(loadImages('entities/boss/idle', 3), imgDur=4),
+            'boss/charge': Animation(loadImages('entities/boss/charge', 3), imgDur=3),
+            'boss/attack': Animation(loadImages('entities/boss/attack', 3), imgDur=4),
+            'boss/jump': Animation(loadImages('entities/boss/jump', 3), imgDur=5),
+            'boss/death': Animation(loadImages('entities/boss/death', 3),imgDur=3)
         }
-
 
         self.player1 = Player(self, (95 - 280, 8464 + 320), (28, 62), (-48, -30))
 
-        self.enemy1 = Enemy(self, 'enemy1', (500, 500), (128, 100), 500, 100, 1, (-55, -105))
-        self.enemys = Entities(self.enemy1)
-
-        self.enemys.add(self.enemy1)
+        self.enemy1 = Enemy(self, 'enemy1', (95 - 280, 8464 + 320), (80, 100), 500, 100, 1, (-55, -105))
+        self.enemys = []
 
         self.tilemap = Tilemap(self, tileSize=32)
 
@@ -49,12 +52,19 @@ class Game:
 
         self.running = True
 
-        self.dungeonGenerator = dungeonGeneration((1920 // 2, 1080 // 2), 10, 40, self.tilemap)
+        self.dungeonGenerator = dungeonGeneration((1920 // 2, 1080 // 2), 10, 40, self.tilemap, self)
 
         self.scroll[0] += (self.player1.rect().centerx - self.screen.get_width() / 2 - self.scroll[0]) - 1000
         self.scroll[1] += (self.player1.rect().centery - self.screen.get_height() / 2 - self.scroll[1]) - 1000
+        
+        self.enemies = Entities(self.enemys)
+        self.enemies.add(self.enemy1)
 
+        self.boss = RaccoonThingyMajigy(self, 'boss', ((1086 + 17) * 32, (264 + 17) * 32), (180, 180), 500, 100, 1, (0, 0))
 
+        self.enemies.add(self.boss)
+
+        print(self.enemys)
     def main(self):
         while self.running:
             dt = self.clock.tick(60) / 1000
@@ -83,6 +93,10 @@ class Game:
                             self.movement['left'] = True
                         if event.key == pygame.K_d:
                             self.movement['right'] = True
+                        if event.key == pygame.K_u:
+                            self.enemies.add(Enemy(self, 'enemy1', self.player1.pos, (100, 100), 500, 100, 1, (-55, -105)))
+                        if event.key == pygame.K_p:
+                            self.player1.pos = [1088 * 32, 266 * 32]
 
 
                 if event.type == pygame.KEYUP:
@@ -107,10 +121,10 @@ class Game:
             self.scroll[1] += (self.player1.rect().centery - self.screen.get_height() / 2 - self.scroll[1]) / 30
             renderScroll = (int(self.scroll[0]), int(self.scroll[1]))
 
-            for i in self.enemys.sprites():
+            for i in self.enemies.sprites():
                 if i.death and i.action != 'death':
-                    self.enemys.remove(i)
-                self.enemys.update(i, self.tilemap, renderScroll, self.player1, dt)
+                    self.enemies.remove(i)
+                self.enemies.update(i, self.tilemap, renderScroll, self.player1, dt)
             # self.enemy1.update(self.tilemap, renderScroll, self.player, dt)
 
             # Draw to the Screen
@@ -118,13 +132,9 @@ class Game:
 
             self.tilemap.draw(self.screen, renderScroll)
 
-            self.enemys.draw(self.screen, renderScroll)
-            # self.enemy1.draw(self.screen, renderScroll)
+            self.enemies.draw(self.screen, renderScroll)
 
             self.player1.draw(self.screen, renderScroll)
-
-            for rect in self.tilemap.physicsRectsAround(self.player1.pos):
-                pygame.draw.rect(self.screen, (255, 0, 0), rect, 1)
 
             pygame.draw.rect(self.screen, (0, 0, 0), (8, 8, 204, 29))
             pygame.draw.rect(self.screen, (255, 0, 0), (10, 10, 2 * self.player1.health, 25))
