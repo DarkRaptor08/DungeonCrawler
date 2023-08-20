@@ -36,7 +36,7 @@ class Game:
             'enemy2/idle': Animation(loadImages('entities/enemy2/idle'), imgDur=4),
             'boss/idle': Animation(loadImages('entities/boss/idle', 3), imgDur=4),
             'boss/charge': Animation(loadImages('entities/boss/charge', 3), imgDur=3),
-            'boss/attack': Animation(loadImages('entities/boss/attack', 3), imgDur=4),
+            'boss/attack': Animation(loadImages('entities/boss/attack', 3), imgDur=4, loop=False),
             'boss/jump': Animation(loadImages('entities/boss/jump', 3), imgDur=5),
             'boss/death': Animation(loadImages('entities/boss/death', 3),imgDur=3)
         }
@@ -60,11 +60,19 @@ class Game:
         self.enemies = Entities(self.enemys)
         self.enemies.add(self.enemy1)
 
-        self.boss = RaccoonThingyMajigy(self, 'boss', ((1086 + 17) * 32, (264 + 17) * 32), (180, 180), 500, 100, 1, (0, 0))
+        self.boss = RaccoonThingyMajigy(self, 'boss', ((1086 + 17) * 32, (264 + 17) * 32), (180, 180), 700, 125, 1, (0, 0))
 
         self.enemies.add(self.boss)
 
         print(self.enemys)
+
+    def menu(self):
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
     def main(self):
         while self.running:
             dt = self.clock.tick(60) / 1000
@@ -150,4 +158,4 @@ class Game:
 
 
 game = Game()
-game.main()
+game.menu()

@@ -222,11 +222,12 @@ class RaccoonThingyMajigy(PhysicsEntity):
 
         elif self.status == 'attack':
             if self.canAct == 0:
-                self.setAction('attack')
-                self.canAct = 1
+                if self.action != 'attack':
+                    self.setAction('attack')
+                self.canAct = 2
                 if self.timeSinceLastAttack <= 0:
                     player.health -= 10
-                    self.timeSinceLastAttack = 7
+                    self.timeSinceLastAttack = 10
 
 
         elif self.status == 'move':
