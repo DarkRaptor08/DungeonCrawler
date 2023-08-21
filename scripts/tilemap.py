@@ -20,16 +20,6 @@ class Tilemap:
         self.tileMap = {}
         self.otherTiles = {}
 
-        # for i in range(100):
-        #     self.tileMap[str( i) + ';0'] = {'type': 'bricks', 'variant': 1, 'rotation': , 'pos': (i, 0)}
-        #
-        #     self.tileMap[str( i) + ';10'] = {'type': 'grass', 'variant': 1, 'pos': (i, 10)}
-        #     self.tileMap['0;' + str(i + 1)] = {'type': 'bricks', 'variant': 2, 'pos': (0, i)}
-        #     for y in range(15):
-        #         self.tileMap[str(i) + ';' + str(y + 11)] = {'type': 'grass', 'variant': 4, 'pos': (i, y + 11)}
-        # self.tileMap['0;0'] = {'type': 'bricks', 'variant': 3, 'pos': (0, 0)}
-
-
     def tilesAround(self, pos):
         tiles = []
         tileLoc = (int(pos[0] // self.tileSize), int(pos[1] // self.tileSize))
@@ -60,7 +50,6 @@ class Tilemap:
                     else:
                         surf.blit(pygame.transform.rotate(self.game.assets[tile['type']][tile['variant']], tile['rotation']), (tile['pos'][0] * self.tileSize - offset[0], tile['pos'][1] * self.tileSize - offset[1]))
 
-                    #pygame.draw.rect(surf, (255, 0, 0), pygame.Rect(tile['pos'][0] * self.tileSize - offset[0], tile['pos'][1] * self.tileSize - offset[1], self.tileSize, self.tileSize), 1)
                     amount += 1
 
         amount = 0
@@ -74,15 +63,8 @@ class Tilemap:
                         pygame.transform.rotate(self.game.assets[tile['type']][tile['variant']], tile['rotation']),
                         (tile['pos'][0] * self.tileSize - offset[0], tile['pos'][1] * self.tileSize - offset[1] - self.game.assets[tile['type']][tile['variant']].get_height())
                     )
-                    #pygame.draw.rect(surf, (255, 0, 0), pygame.Rect(tile['pos'][0] * self.tileSize - offset[0],
-                                                                        #tile['pos'][1] * self.tileSize - offset[1],
-                                                                       # self.tileSize, self.tileSize), 1)
+
                     amount += 1
-
-        # for loc in self.tileMap:
-        #     tile = self.tileMap[loc]
-        #     surf.blit(self.game.assets[tile['type']][tile['variant']], (tile['pos'][0] * self.tileSize - offset[0], tile['pos'][1] * self.tileSize - offset[1]))
-
 
 class dungeonGeneration:
     def __init__(self, dungeonSize, mainRooms, medRooms, tileMap, game):
@@ -382,7 +364,7 @@ class dungeonGeneration:
                                                            'pos': (x + self.mainRoomRects[i].x, y + self.mainRoomRects[i].y)}
 
                     if mainRoomEnemies[roommainlist][y][x] != -1:
-                        enemies.append(Enemy(self.game, 'enemy1', ((x + self.mainRoomRects[i].x) * 32, (y + self.mainRoomRects[i].y) * 32), (128-16, 100-16), 500, 100, 1, (-55-8, -105-8)))
+                        enemies.append(Enemy(self.game, 'enemy1', ((x + self.mainRoomRects[i].x) * 64, (y + self.mainRoomRects[i].y) * 64), (128-16, 100-16), 500, 100, 1, (-55-8, -105-8)))
 
 
 
