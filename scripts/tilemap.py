@@ -20,6 +20,8 @@ class Tilemap:
         self.tileMap = {}
         self.otherTiles = {}
 
+
+    # Gets tiles arround the player
     def tilesAround(self, pos):
         tiles = []
         tileLoc = (int(pos[0] // self.tileSize), int(pos[1] // self.tileSize))
@@ -29,6 +31,7 @@ class Tilemap:
                 tiles.append(self.tileMap[checkLoc])
         return tiles
 
+    # Checks if tiles arround are phyics tiles
     def physicsRectsAround(self, pos):
         rects = []
         for tile in self.tilesAround(pos):
@@ -37,9 +40,11 @@ class Tilemap:
 
         return rects
 
+    # Draws the tiles
     def draw(self, surf, offset):
         amount = 0
 
+        # Goes through all tiles and draws them
         for x in range(offset[0] // self.tileSize, (offset[0] + surf.get_width()) // self.tileSize + 8):
             for y in range(offset[1] // self.tileSize, (offset[1] + surf.get_height()) // self.tileSize + 8):
                 loc = str(x) + ';' + str(y)
@@ -50,9 +55,8 @@ class Tilemap:
                     else:
                         surf.blit(pygame.transform.rotate(self.game.assets[tile['type']][tile['variant']], tile['rotation']), (tile['pos'][0] * self.tileSize - offset[0], tile['pos'][1] * self.tileSize - offset[1]))
 
-                    amount += 1
+        # Goes through all other tiles (props) and draws them
 
-        amount = 0
         for x in range(offset[0] // self.tileSize, (offset[0] + surf.get_width()) // self.tileSize + 1):
             for y in range(offset[1] // self.tileSize, (offset[1] + surf.get_height()) // self.tileSize + 1):
                 loc = str(x) + ';' + str(y)
@@ -64,7 +68,6 @@ class Tilemap:
                         (tile['pos'][0] * self.tileSize - offset[0], tile['pos'][1] * self.tileSize - offset[1] - self.game.assets[tile['type']][tile['variant']].get_height())
                     )
 
-                    amount += 1
 
 class dungeonGeneration:
     def __init__(self, dungeonSize, mainRooms, medRooms, tileMap, game):
@@ -97,12 +100,15 @@ class dungeonGeneration:
 
         return round(ellipseWidth * r * math.cos(t) / 2) + ellipseWidth // 2, round(ellipseHeight * r * math.sin(t) / 2) + ellipseHeight // 2
 
+    #checks collision
     def checkCollision(self, rectList, rect):
         for other_rect in rectList:
             if rect.colliderect(other_rect):
                 return True
         return False
 
+
+    # Gets a amount of rooms out of a list then returns them width positions
     def generateRooms(self, amount, collisionRects, roomList):
         rooms = random.choices(roomList, k=amount)
 
@@ -131,17 +137,22 @@ class dungeonGeneration:
 
         return roomRects, rooms
 
+
+    # Generate the dungeon tilemap.
     def generate(self):
 
+        # Loads spawn and boss rooms
         spawn = spawnRoom
         spawnRect = [pygame.Rect(-15, 264, 22, 24)]
         boss = endRoom
         bossRect = [pygame.Rect(1086, 264, 35, 35)]
 
+        # Generates the main and medium rooms
         self.mainRoomRects, self.mainRooms = self.generateRooms(self.mainRoomsAmount, spawnRect + bossRect, mainRoomList)
 
         self.medRoomsRects, self.medRooms = self.generateRooms(self.medRoomsAmount, self.mainRoomRects + spawnRect + bossRect, scripts.rooms.medRoomList)
 
+        # Makes a list of points 
         points = []
 
         points.append((spawnRect[0].midright[0], spawnRect[0].midright[1]))
@@ -150,10 +161,7 @@ class dungeonGeneration:
 
 
         for rect in self.mainRoomRects:
-            # points.append(rect.midleft)
-            # points.append(rect.midright)
-            # points.append(rect.midtop)
-            # points.append(rect.midbottom)
+
             points.append(rect.center)
 
         tri = Delaunay(points)
